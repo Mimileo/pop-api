@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int            @id @default(autoincrement())
+  first_name     String?
+  last_initial   String?
+  email          String         @unique @db.VarChar(255)
+  password       String         @db.VarChar(255)
+  is_teacher     Boolean        @default(false)
+  district       String?
+  school         String?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  last_name      String?
+  studentClasses StudentClass[]
+  Teacher        Teacher?
+  transactions   Transaction[]
+}
+
+model Teacher {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  district   String?
+  school     String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  classes    Class[]
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Class {
+  id             Int            @id @default(autoincrement())
+  name           String         @db.VarChar(255)
+  download_code  String         @unique @db.VarChar(255)
+  teacher_id     Int
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  teacher        Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  studentClasses StudentClass[]
+}
+
+model StudentClass {
+  student_id Int
+  class_id   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  class      Class    @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  student    User     @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, class_id])
+}
+
+model Transaction {
+  id         Int             @id @default(autoincrement())
+  student_id Int
+  stock_id   Int
+  type       TransactionType
+  quantity   Float
+  price      Float
+  timestamp  DateTime        @default(now())
+  student    User            @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+enum TransactionType {
+  BUY
+  SELL
+}
