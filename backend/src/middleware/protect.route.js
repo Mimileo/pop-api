@@ -20,14 +20,15 @@ const protectRoute = async(req, res, next) => {
 
         // find the user from the database with the decoded id and remove the password from the response
         // select will return only the id, first_name, last_name and email fields
-        const user = await prisma.user.findUnique({
+        const user = await prisma.users.findUnique({
             where: {
                 id: decoded.userId,
             }, select: {
                 id: true,
-                first_name: true,
-                last_name: true,
+                firstName: true,
+                lastName: true,
                 email: true,
+            
                 
             }
         });

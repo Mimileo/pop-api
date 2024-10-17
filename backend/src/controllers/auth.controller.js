@@ -2,11 +2,12 @@
 import prisma from "../db/prisma.js";
 import bcryptjs from "bcryptjs";
 import generateToken from "../utils/generateToken.js";
+import { fi } from "@faker-js/faker";
 
 export const login = async (req, res) => {
    try {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.users.findUnique({ where: { email } });
 
     if(!user) {
         return res.status(404).json({ error: "Invalid credentials" });
@@ -22,9 +23,10 @@ export const login = async (req, res) => {
 
     res.status(200).json({ 
         id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        is_teacher: user.is_teacher,
      });
 
 
@@ -50,9 +52,9 @@ export const logout = (req, res) => {
 export const register = async(req, res) => {
     
     try {
-        const { first_name, last_name, email, confirmPassword, password, is_teacher} = req.body;
+        const { firstName, lastName, email, confirmPassword, password, is_teacher, roles} = req.body;
         
-        if(!first_name || !last_name || !email || !confirmPassword || !password ) {
+        if(!firstName || !lastName || !email || !confirmPassword || !password  || !roles) {
             return res.status(400).json({ error: "All fields are required" });
         }
 
@@ -60,7 +62,7 @@ export const register = async(req, res) => {
             return res.status(400).json({ error: "Passwords do not match" });
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.users.findUnique({ where: { email } });
 
         if(user) {
             return res.status(400).json({ error: "User already exists" });
@@ -71,17 +73,19 @@ export const register = async(req, res) => {
         // Hash the password
        const hashedPassword = await bcryptjs.hash(password, salt);
 
-       const newUser = await prisma.user.create({
+       const newUser = await prisma.users.create({
         data: {
-            first_name,
-            last_name,
+            firstName,
+            lastName,
             email,
-            last_initial: last_name[0],
+            //last_initial: last_name[0],
+            roles,
             password: hashedPassword,
-            is_teacher: is_teacher !== undefined ? is_teacher : false, // Default to false 
+           // is_teacher: is_teacher !== undefined ? is_teacher : false, // Default to false 
         },
     });
 
+    /*
     if (is_teacher) {
         await prisma.teacher.create({
             data: {
@@ -90,6 +94,7 @@ export const register = async(req, res) => {
             },
         });
     }
+        */
 
        if (newUser) {
         // generate JWT token
@@ -97,10 +102,11 @@ export const register = async(req, res) => {
 
         res.status(201).json({ 
             id: newUser.id,
-            first_name: newUser.first_name,
-            last_name: newUser.last_name,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
             email: newUser.email,
-            is_teacher: newUser.is_teacher
+            is_teacher: newUser.is_teacher,
+            roles: newUser.roles
          });
        } else{
             res.status(400).json({ error: "Failed to create user" });
@@ -113,17 +119,18 @@ export const register = async(req, res) => {
 }
 export const getStatus = async(req, res) => {
     try {
-        const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+        const user = await prisma.users.findUnique({ where: { id: req.user.id } });
         
         if(!user) {
             return res.status(404).json({ error: "User not found" });
         }
         res.status(200).json({ 
             id: user.id,
-            first_name: user.first_name,
-            last_name: user.last_name,
+            first_name: user.firstName,
+            last_name: user.lastName,
             email: user.email,
-            is_teacher: user.is_teacher
+            is_teacher: user.is_teacher,
+            status: "is logged in"
          });
 
     } catch (error) {

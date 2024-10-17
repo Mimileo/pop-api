@@ -1,11 +1,13 @@
 import express from "express";
 import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
+
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/users.route.js";
 import studentdentRoutes from "./routes/students.route.js";
 import teacherRoutes from "./routes/teacher.route.js";
 import classesRoutes from "./routes/classes.route.js";
-import dotenv from "dotenv";
+import joinRoutes from "./routes/join.route.js";
 
 dotenv.config();
 
@@ -17,6 +19,8 @@ app.use(express.json()); // allows us to use json
 app.use("/api/auth", authRoutes);
 
 app.use("/api/users", userRoutes);
+
+app.use("/api/popstock", joinRoutes);
 
 app.use("/api/students", studentdentRoutes);
 

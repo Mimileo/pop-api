@@ -5,70 +5,167 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-model User {
-  id             Int            @id @default(autoincrement())
-  first_name     String?
-  last_initial   String?
-  email          String         @unique @db.VarChar(255)
-  password       String         @db.VarChar(255)
-  is_teacher     Boolean        @default(false)
-  district       String?
-  school         String?
-  created_at     DateTime       @default(now())
-  updated_at     DateTime       @updatedAt
-  last_name      String?
-  studentClasses StudentClass[]
-  Teacher        Teacher?
-  transactions   Transaction[]
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model deals {
+  createdAt                   DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt                   DateTime           @default(now()) @db.Timestamp(6)
+  id                          Int                @id(map: "PK_8c66f03b250f613ff8615940b4b") @default(autoincrement())
+  price                       Int
+  quantity                    Int
+  sellId                      Int
+  buyId                       Int
+  orders_deals_sellIdToorders orders             @relation("deals_sellIdToorders", fields: [sellId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_24fd7a617bc47487ee3366f8958")
+  orders_deals_buyIdToorders  orders             @relation("deals_buyIdToorders", fields: [buyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_5e112e050a1b5f3596776de4208")
+  trading_activity            trading_activity[]
 }
 
-model Teacher {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @unique
-  district   String?
-  school     String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  classes    Class[]
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model files {
+  createdAt                   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt                   DateTime @default(now()) @db.Timestamp(6)
+  id                          String   @id(map: "PK_6c16b9093a142e0e7613b04a3d9") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                        String   @db.VarChar
+  originalName                String?  @db.VarChar
+  context                     String?  @db.VarChar
+  mimetype                    String?  @db.VarChar
+  size                        Int?
+  ownerId                     String?  @db.Uuid
+  users_files_ownerIdTousers  users?   @relation("files_ownerIdTousers", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_a23484d1055e34d75b25f616792")
+  news                        news?
+  stocks                      stocks?
+  users_users_avatarIdTofiles users?   @relation("users_avatarIdTofiles")
 }
 
-model Class {
-  id             Int            @id @default(autoincrement())
-  name           String         @db.VarChar(255)
-  download_code  String         @unique @db.VarChar(255)
-  teacher_id     Int
-  created_at     DateTime       @default(now())
-  updated_at     DateTime       @updatedAt
-  teacher        Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  studentClasses StudentClass[]
+model migrations {
+  id        Int    @id(map: "PK_8c82d7f526340ab734260ea46be") @default(autoincrement())
+  timestamp BigInt
+  name      String @db.VarChar
 }
 
-model StudentClass {
-  student_id Int
-  class_id   Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  class      Class    @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  student    User     @relation(fields: [student_id], references: [id], onDelete: Cascade)
-
-  @@id([student_id, class_id])
+model news {
+  id          String  @id(map: "PK_39a43dfcb6007180f04aff2357e") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  headline    String  @db.VarChar
+  description String
+  link        String  @db.VarChar
+  imageId     String? @unique(map: "REL_b1e5a455558381ffcf46be9eee") @db.Uuid
+  stockId     String  @db.Uuid
+  files       files?  @relation(fields: [imageId], references: [id], onUpdate: NoAction, map: "FK_b1e5a455558381ffcf46be9eeee")
+  stocks      stocks  @relation(fields: [stockId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_f0362a0fd0f890fff15737cf2f8")
 }
 
-model Transaction {
-  id         Int             @id @default(autoincrement())
-  student_id Int
-  stock_id   Int
-  type       TransactionType
-  quantity   Float
-  price      Float
-  timestamp  DateTime        @default(now())
-  student    User            @relation(fields: [student_id], references: [id], onDelete: Cascade)
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model orders {
+  createdAt                  DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt                  DateTime           @default(now()) @db.Timestamp(6)
+  id                         Int                @id(map: "PK_710e2d4957aa5878dfe94e4ac2f") @default(autoincrement())
+  type                       orders_type_enum
+  status                     orders_status_enum
+  price                      Int
+  quantity                   Int
+  initialQuantity            Int
+  duration                   Int
+  creatorId                  String             @db.Uuid
+  stockId                    String             @db.Uuid
+  deals_deals_sellIdToorders deals[]            @relation("deals_sellIdToorders")
+  deals_deals_buyIdToorders  deals[]            @relation("deals_buyIdToorders")
+  stocks                     stocks             @relation(fields: [stockId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_1ab8f93e87586de0fd3e4be8128")
+  users                      users              @relation(fields: [creatorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_b40146eff5004cd1e86c15aa987")
 }
 
-enum TransactionType {
-  BUY
-  SELL
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model portfolio_items {
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  id        String   @id(map: "PK_c636df11b3cc98f390c8efc656a") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  quantity  Int      @default(0)
+  stockId   String   @db.Uuid
+  userId    String   @db.Uuid
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_7ec721ebc4a2c3f8b31f45937fc")
+  stocks    stocks   @relation(fields: [stockId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_922e4dd6ba06e096ae8116171b3")
+
+  @@unique([userId, stockId], map: "user_stock")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model stocks {
+  createdAt           DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt           DateTime           @default(now()) @db.Timestamp(6)
+  id                  String             @id(map: "PK_b5b1ee4ac914767229337974575") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  logoId              String?            @unique(map: "REL_1201811d2b2aa2e505c8f733b5") @db.Uuid
+  name                String             @unique(map: "UQ_cb547bdd2c2af241735260da520") @db.VarChar
+  quantity            Int
+  nominalPrice        Int
+  information         String
+  members             Int
+  debutDate           DateTime           @db.Date
+  activeYears         Int
+  musicShowWins       Int                @default(0)
+  awardShowWins       Int                @default(0)
+  youtubeChannelViews Int                @default(0)
+  monthlyStream       Int                @default(0)
+  albumPresales       Int                @default(0)
+  albumSales          Int                @default(0)
+  socialMedia         Int                @default(0)
+  news                news[]
+  orders              orders[]
+  portfolio_items     portfolio_items[]
+  files               files?             @relation(fields: [logoId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1201811d2b2aa2e505c8f733b52")
+  trading_activity    trading_activity[]
+}
+
+/// This table has subclasses and requires additional setup for migrations. Visit https://pris.ly/d/table-inheritance for more info.
+model trading_activity {
+  time     DateTime @default(now()) @db.Timestamp(6)
+  token    String   @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  price    Int
+  quantity Int
+  amount   Int
+  stockId  String   @db.Uuid
+  dealId   Int
+  deals    deals    @relation(fields: [dealId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_69f7994da1f758683d47e50e85d")
+  stocks   stocks   @relation(fields: [stockId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_87b8d74ded964a5447a24a8bd71")
+
+  @@id([time, token], map: "PK_fdc629c75e80f88dfed2d3aa3b7")
+  @@index([stockId, time(sort: Desc)], map: "index_stock_time")
+  @@index([time(sort: Desc)])
+}
+
+model users {
+  createdAt                   DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt                   DateTime          @default(now()) @db.Timestamp(6)
+  id                          String            @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  roles                       String            @db.VarChar
+  firstName                   String?           @db.VarChar
+  lastName                    String?           @db.VarChar
+  email                       String            @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar
+  password                    String            @db.VarChar
+  avatarId                    String?           @unique(map: "REL_3e1f52ec904aed992472f2be14") @db.Uuid
+  files_files_ownerIdTousers  files[]           @relation("files_ownerIdTousers")
+  orders                      orders[]
+  portfolio_items             portfolio_items[]
+  files_users_avatarIdTofiles files?            @relation("users_avatarIdTofiles", fields: [avatarId], references: [id], onUpdate: NoAction, map: "FK_3e1f52ec904aed992472f2be147")
+  wallets                     wallets?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model wallets {
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  id        String   @id(map: "PK_8402e5df5a30a229380e83e4f7e") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  available Int      @default(0)
+  userId    String   @unique(map: "REL_2ecdb33f23e9a6fc392025c0b9") @db.Uuid
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_2ecdb33f23e9a6fc392025c0b97")
+}
+
+enum orders_status_enum {
+  pending
+  closed
+  canceled
+}
+
+enum orders_type_enum {
+  sell
+  buy
 }

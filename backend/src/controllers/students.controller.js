@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { calculateSharpeRatio, calculateDiversification } from '../utils/students/portfolio.metrics.js';
-import { TransactionType } from '@prisma/client';
+
 const prisma = new PrismaClient();
 
 const fetchStudents = async (where, pagination) => {
@@ -64,7 +64,7 @@ export const getStudents = async (req, res) => {
         }
 
         // Fetch students with their class information
-        const allStudents = await prisma.user.findMany({
+        const allStudents = await prisma.users.findMany({
             where,
             include: {
                 studentClasses: {
