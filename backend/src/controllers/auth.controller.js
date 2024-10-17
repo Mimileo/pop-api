@@ -2,7 +2,6 @@
 import prisma from "../db/prisma.js";
 import bcryptjs from "bcryptjs";
 import generateToken from "../utils/generateToken.js";
-import { fi } from "@faker-js/faker";
 
 export const login = async (req, res) => {
    try {
@@ -130,7 +129,8 @@ export const getStatus = async(req, res) => {
             last_name: user.lastName,
             email: user.email,
             is_teacher: user.is_teacher,
-            status: "is logged in"
+            status: "is logged in",
+           
          });
 
     } catch (error) {

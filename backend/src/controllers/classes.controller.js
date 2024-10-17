@@ -105,8 +105,28 @@ export const getClasses = async (req, res) => {
 };
 
 
+
+/*
+POST /api/classes
+Description: Create a new class and generate a unique download code.
+Implementation:
+Validate the class name and other input data.
+Generate a unique download code using the format MM-YY-XXXXXX (Month-Year-6 random digits).
+Insert the new class into the classes table with the generated download code.
+
+classes
+id (SERIAL PRIMARY KEY)
+teacher_id (INTEGER REFERENCES teachers(id) ON DELETE CASCADE)
+name (VARCHAR NOT NULL)
+download_code (VARCHAR UNIQUE NOT NULL, used by students to join the class)
+created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+updated_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+
+
+*/
 export const addClass = async (req, res) => {
-    const { teacher_id, className } = req.body;
+    const {  className } = req.body;
+    // add other inputs: teacher_id
 
     // Validate class name
     if (!className || !teacher_id) {
