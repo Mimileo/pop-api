@@ -6,6 +6,7 @@ import protectRoute from "../middleware/protect.route.js";
 
 const router = express.Router();
 
+// public routes
 router.post("/login", login);
 
 router.post("/logout", logout);

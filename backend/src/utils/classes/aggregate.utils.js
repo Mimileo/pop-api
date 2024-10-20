@@ -2,12 +2,13 @@ const calculateStudentCount = (classItem) => {
     return classItem.studentClasses.length; // Count of students in the class
 };
 
+// calculating portfolio value is (price * quantity)
  const calculatePortfolioValues = (studentClasses) => {
     return studentClasses.reduce((total, studentClass) => {
         const studentTransactions = studentClass.student.transactions;
         const totalValue = studentTransactions.reduce((sum, transaction) => {
-            return sum + transaction.price * transaction.quantity; // Adjust based on your value calculation
-        }, 0);
+            return sum + transaction.price * transaction.quantity; // Placeholder for calculating portfolio value
+        }, 0); 
         return total + totalValue;
     }, 0);
 };
