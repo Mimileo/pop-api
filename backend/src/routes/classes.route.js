@@ -1,6 +1,6 @@
 // backend/src/routes/classes.route.js
 import express from "express";
-import { addClass, getAllClasses, getClasses, getClassesForTeacher } from "../controllers/classes.controller.js";
+import { addClass, calculateClassConsistency, getAllClasses, getClasses, getClassesForTeacher, getStudentsForClass} from "../controllers/classes.controller.js";
 
 // GET /api/classes
 const router = express.Router();
@@ -20,6 +20,8 @@ Fetch class data and aggregate information such as student count, portfolio valu
 
 router.get("/", getClasses);
 
+router.get('/data/:classId', getStudentsForClass);
+
 router.get('/teacher', getClassesForTeacher);
 
 
@@ -36,6 +38,9 @@ Validate the incoming class data and generate a unique download code.
 Insert new class into the classes table and return relevant details.
 */
 router.post("/addClass", addClass);
+
+
+router.get("/:classId/consistency", calculateClassConsistency);
 
 
 

@@ -50,7 +50,7 @@ app.use("/api/orders",protectRoute, orderRoutes);
 
 app.use("/api/portfolio_items", protectRoute,portfolioItemsRoutes);
 
-app.use("/api/popstock", protectRoute, joinRoutes);
+app.use("/api/popstock", joinRoutes);
 
 app.use("/api/stocks", protectRoute, stockRoutes);
 
@@ -101,4 +101,5 @@ app.listen(5000, () => {
     console.log("Listening on port 5000");
     console.log(process.env.DATABASE_URL);
     console.log(process.env.NODE_ENV);
+    console.log(process.env.SENDGRID_API_KEY);
 });

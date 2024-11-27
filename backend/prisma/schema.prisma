@@ -5,10 +5,21 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model classes {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teacher_id      String?           @db.Uuid
+  name            String            @db.VarChar
+  download_code   String            @unique @db.VarChar
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  teachers        teachers?         @relation(fields: [teacher_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  student_classes student_classes[]
+
+  @@index([download_code], map: "ix_classes_download_code")
+}
+
 model deals {
   createdAt                   DateTime           @default(now()) @db.Timestamp(6)
   updatedAt                   DateTime           @default(now()) @db.Timestamp(6)
@@ -55,7 +66,6 @@ model news {
   stocks      stocks  @relation(fields: [stockId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_f0362a0fd0f890fff15737cf2f8")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model orders {
   createdAt                  DateTime           @default(now()) @db.Timestamp(6)
   updatedAt                  DateTime           @default(now()) @db.Timestamp(6)
@@ -74,7 +84,6 @@ model orders {
   users                      users              @relation(fields: [creatorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_b40146eff5004cd1e86c15aa987")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model portfolio_items {
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
@@ -88,7 +97,6 @@ model portfolio_items {
   @@unique([userId, stockId], map: "user_stock")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model stocks {
   createdAt           DateTime           @default(now()) @db.Timestamp(6)
   updatedAt           DateTime           @default(now()) @db.Timestamp(6)
@@ -115,7 +123,32 @@ model stocks {
   trading_activity    trading_activity[]
 }
 
-/// This table has subclasses and requires additional setup for migrations. Visit https://pris.ly/d/table-inheritance for more info.
+model student_classes {
+  student_id String    @db.Uuid
+  class_id   String    @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+  classes    classes   @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users     @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([student_id, class_id])
+  @@index([class_id], map: "ix_student_classes_class_id")
+  @@index([student_id], map: "ix_student_classes_student_id")
+}
+
+model teachers {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  first_name String    @db.VarChar
+  last_name  String    @db.VarChar
+  email      String    @unique @db.VarChar
+  password   String    @db.VarChar
+  district   String?   @db.VarChar
+  school     String?   @db.VarChar
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+  classes    classes[]
+}
+
 model trading_activity {
   time     DateTime @default(now()) @db.Timestamp(6)
   token    String   @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -132,6 +165,19 @@ model trading_activity {
   @@index([time(sort: Desc)])
 }
 
+model transactions {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id String?          @db.Uuid
+  stock_id   String           @db.VarChar
+  type       transaction_type
+  quantity   Decimal          @db.Decimal
+  price      Decimal          @db.Decimal
+  timestamp  DateTime?        @default(now()) @db.Timestamp(6)
+  users      users?           @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([timestamp], map: "ix_transactions_timestamp")
+}
+
 model users {
   createdAt                   DateTime          @default(now()) @db.Timestamp(6)
   updatedAt                   DateTime          @default(now()) @db.Timestamp(6)
@@ -142,14 +188,18 @@ model users {
   email                       String            @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar
   password                    String            @db.VarChar
   avatarId                    String?           @unique(map: "REL_3e1f52ec904aed992472f2be14") @db.Uuid
+  is_teacher                  Boolean?          @default(false)
+  last_initial                String?           @db.VarChar(1)
+  first_name                  String?           @db.VarChar(255)
   files_files_ownerIdTousers  files[]           @relation("files_ownerIdTousers")
   orders                      orders[]
   portfolio_items             portfolio_items[]
+  student_classes             student_classes[]
+  transactions                transactions[]
   files_users_avatarIdTofiles files?            @relation("users_avatarIdTofiles", fields: [avatarId], references: [id], onUpdate: NoAction, map: "FK_3e1f52ec904aed992472f2be147")
   wallets                     wallets?
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model wallets {
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
@@ -168,4 +218,9 @@ enum orders_status_enum {
 enum orders_type_enum {
   sell
   buy
+}
+
+enum transaction_type {
+  buy
+  sell
 }

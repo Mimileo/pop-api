@@ -76,24 +76,32 @@ export const register = async(req, res) => {
         data: {
             firstName,
             lastName,
+            first_name: firstName,
             email,
-            //last_initial: last_name[0],
+            last_initial: lastName[0],
             roles,
             password: hashedPassword,
-           // is_teacher: is_teacher !== undefined ? is_teacher : false, // Default to false 
+            is_teacher: is_teacher !== undefined ? is_teacher : false, // Default to false 
         },
     });
 
-    /*
+    
     if (is_teacher) {
-        await prisma.teacher.create({
+        await prisma.teachers.create({
             data: {
-                userId: newUser.id, // Connect the teacher to the user
-              
+               id: newUser.id, // Connect the teacher to the user
+               first_name: firstName,
+               last_name: lastName,
+               email: email,
+               district: "",    
+               school: "",  
+               password: hashedPassword,
+               created_at: newUser.createdAt,
+               updated_at: newUser.updatedAt,
             },
         });
     }
-        */
+    
 
        if (newUser) {
         // generate JWT token

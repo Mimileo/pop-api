@@ -1,4 +1,3 @@
--- Enable the uuid-ossp extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- CreateEnum
@@ -6,6 +5,21 @@ CREATE TYPE "orders_status_enum" AS ENUM ('pending', 'closed', 'canceled');
 
 -- CreateEnum
 CREATE TYPE "orders_type_enum" AS ENUM ('sell', 'buy');
+
+-- CreateEnum
+CREATE TYPE "transaction_type" AS ENUM ('buy', 'sell');
+
+-- CreateTable
+CREATE TABLE "classes" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "teacher_id" UUID,
+    "name" VARCHAR NOT NULL,
+    "download_code" VARCHAR NOT NULL,
+    "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "classes_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "deals" (
@@ -110,6 +124,31 @@ CREATE TABLE "stocks" (
 );
 
 -- CreateTable
+CREATE TABLE "student_classes" (
+    "student_id" UUID NOT NULL,
+    "class_id" UUID NOT NULL,
+    "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "student_classes_pkey" PRIMARY KEY ("student_id","class_id")
+);
+
+-- CreateTable
+CREATE TABLE "teachers" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "first_name" VARCHAR NOT NULL,
+    "last_name" VARCHAR NOT NULL,
+    "email" VARCHAR NOT NULL,
+    "password" VARCHAR NOT NULL,
+    "district" VARCHAR,
+    "school" VARCHAR,
+    "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "teachers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "trading_activity" (
     "time" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "token" UUID NOT NULL DEFAULT uuid_generate_v4(),
@@ -123,6 +162,19 @@ CREATE TABLE "trading_activity" (
 );
 
 -- CreateTable
+CREATE TABLE "transactions" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "student_id" UUID,
+    "stock_id" VARCHAR NOT NULL,
+    "type" "transaction_type" NOT NULL,
+    "quantity" DECIMAL NOT NULL,
+    "price" DECIMAL NOT NULL,
+    "timestamp" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "transactions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "users" (
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -133,6 +185,9 @@ CREATE TABLE "users" (
     "email" VARCHAR NOT NULL,
     "password" VARCHAR NOT NULL,
     "avatarId" UUID,
+    "is_teacher" BOOLEAN DEFAULT false,
+    "last_initial" VARCHAR(1),
+    "first_name" VARCHAR(255),
 
     CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")
 );
@@ -149,6 +204,12 @@ CREATE TABLE "wallets" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "classes_download_code_key" ON "classes"("download_code");
+
+-- CreateIndex
+CREATE INDEX "ix_classes_download_code" ON "classes"("download_code");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "REL_b1e5a455558381ffcf46be9eee" ON "news"("imageId");
 
 -- CreateIndex
@@ -161,10 +222,22 @@ CREATE UNIQUE INDEX "REL_1201811d2b2aa2e505c8f733b5" ON "stocks"("logoId");
 CREATE UNIQUE INDEX "UQ_cb547bdd2c2af241735260da520" ON "stocks"("name");
 
 -- CreateIndex
+CREATE INDEX "ix_student_classes_class_id" ON "student_classes"("class_id");
+
+-- CreateIndex
+CREATE INDEX "ix_student_classes_student_id" ON "student_classes"("student_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "teachers_email_key" ON "teachers"("email");
+
+-- CreateIndex
 CREATE INDEX "index_stock_time" ON "trading_activity"("stockId", "time" DESC);
 
 -- CreateIndex
 CREATE INDEX "trading_activity_time_idx" ON "trading_activity"("time" DESC);
+
+-- CreateIndex
+CREATE INDEX "ix_transactions_timestamp" ON "transactions"("timestamp");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UQ_97672ac88f789774dd47f7c8be3" ON "users"("email");
@@ -174,6 +247,9 @@ CREATE UNIQUE INDEX "REL_3e1f52ec904aed992472f2be14" ON "users"("avatarId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "REL_2ecdb33f23e9a6fc392025c0b9" ON "wallets"("userId");
+
+-- AddForeignKey
+ALTER TABLE "classes" ADD CONSTRAINT "classes_teacher_id_fkey" FOREIGN KEY ("teacher_id") REFERENCES "teachers"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "deals" ADD CONSTRAINT "FK_24fd7a617bc47487ee3366f8958" FOREIGN KEY ("sellId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -206,10 +282,19 @@ ALTER TABLE "portfolio_items" ADD CONSTRAINT "FK_922e4dd6ba06e096ae8116171b3" FO
 ALTER TABLE "stocks" ADD CONSTRAINT "FK_1201811d2b2aa2e505c8f733b52" FOREIGN KEY ("logoId") REFERENCES "files"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "student_classes" ADD CONSTRAINT "student_classes_class_id_fkey" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "student_classes" ADD CONSTRAINT "student_classes_student_id_fkey" FOREIGN KEY ("student_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "trading_activity" ADD CONSTRAINT "FK_69f7994da1f758683d47e50e85d" FOREIGN KEY ("dealId") REFERENCES "deals"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "trading_activity" ADD CONSTRAINT "FK_87b8d74ded964a5447a24a8bd71" FOREIGN KEY ("stockId") REFERENCES "stocks"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_student_id_fkey" FOREIGN KEY ("student_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "FK_3e1f52ec904aed992472f2be147" FOREIGN KEY ("avatarId") REFERENCES "files"("id") ON DELETE SET NULL ON UPDATE NO ACTION;

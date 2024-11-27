@@ -1,8 +1,12 @@
 // backend/src/routes/students.route.js
 import express from "express";
-import {getStudents, getAllStudents, getStudentClasses, addFunds, getStudentBalance, getStudentActivity} from "../controllers/students.controller.js";
+import {getStudents, getAllStudents, getStudentClasses, addFunds, getStudentBalance, getStudentActivity, getProfitLoss } from "../controllers/students.controller.js";
 
 const router = express.Router();
+
+
+// test profit loss on single transaction
+router.get("/testProfitLoss", getProfitLoss);
 
 
 // GET routes

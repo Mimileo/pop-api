@@ -5,32 +5,35 @@
   "main": "backend/src/index.js",
   "scripts": {
     "dev": "nodemon backend/src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "seed": "node backend/src/prisma/seed.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm install && npm install"
+
   },
   "prisma": {
-    "seed": "node backend/prisma/seed.js"
+    "seed": "node seed.js"
   },
   "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@faker-js/faker": "^9.0.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "nodemon": "^3.1.7",
-    "prisma": "^5.21.0",
-    "prisma-faker": "^0.0.1"
+    "prisma": "^5.21.1"
   },
   "dependencies": {
-    "@prisma/client": "^5.21.0",
+    "@prisma/client": "^5.21.1",
+    "@sendgrid/mail": "^8.1.4",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.0"
+    "pg": "^8.13.0",
+    "uuid": "^11.0.3"
   }
 }
