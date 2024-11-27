@@ -1,4 +1,3 @@
-import { TransactionType } from '@prisma/client';
 
 // Calculate portfolio diversification (e.g., number of unique stocks)
 export const calculateDiversification = (transactions) => {

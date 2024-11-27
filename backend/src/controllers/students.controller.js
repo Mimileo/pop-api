@@ -1,5 +1,4 @@
 import prisma from "../db/prisma.js";
-import { TransactionType } from '@prisma/client';
 
 
 import {
